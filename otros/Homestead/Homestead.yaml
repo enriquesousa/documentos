@@ -1,0 +1,62 @@
+---
+ip: "192.168.56.56"
+memory: 2048
+cpus: 2
+provider: virtualbox
+
+authorize: ~/.ssh/homestead_rsa.pub
+
+keys:
+    - ~/.ssh/homestead_rsa
+
+folders:
+    - map: ~/laravel/homestead
+      to: /home/vagrant/code
+
+sites:
+    - map: homestead.pruebas.test
+      to: /home/vagrant/code/pruebas/test/public
+    - map: homestead.pruebas.livewire_test
+      to: /home/vagrant/code/pruebas/livewire_test/public
+
+databases:
+    - homestead_test
+    - livewire_test
+
+features:
+    - mysql: true
+    - mariadb: false
+    - postgresql: false
+    - ohmyzsh: false
+    - webdriver: false
+
+services:
+    - enabled:
+          - "mysql"
+#    - disabled:
+#        - "postgresql@11-main"
+
+#ports:
+#    - send: 33060 # MySQL/MariaDB
+#      to: 3306
+#    - send: 4040
+#      to: 4040
+#    - send: 54320 # PostgreSQL
+#      to: 5432
+#    - send: 8025 # Mailhog
+#      to: 8025
+#    - send: 9600
+#      to: 9600
+#    - send: 27017
+#      to: 27017
+
+# No olvidarnos modificar:
+# - sudo micro /etc/hosts
+# - sudo service network-manager restart
+
+# Si le hacemos algún cambio a Homestead.yaml:
+# - vagrant reload --provision
+
+# - vagrant up (Start VM)
+# - vagrant ssh (Enter VM)
+# - vagrant halt (Stop VM)
