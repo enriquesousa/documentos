@@ -1,3 +1,4 @@
+
 # Path Relativo
 Linux/git/git.md
 
@@ -365,7 +366,7 @@ Finally, you can merge your feature branch into dev:
 - git add -A
 - git commit -m "livewire_test commit inicial"
 - git push origin master
-# How to Setup a Laravel Project You Cloned from Github.com
+# How to Setup a Laravel Project You Cloned from Github.com lando
 Clonar el git master y descomprimirlo
 Entrar a la carpeta y crear el .lando.yml:
 ```php
@@ -423,5 +424,33 @@ Migrate the database
 Compilar:
 - lando npm run dev
 - lando npm run watch
+# Cloned from Github.com
+Clonar con gitkraken
+- composer install
+- npm install
+- Create a copy of .env.example ti .env file
+Generate an app encryption key
+- php artisan key:generate
+Create an empty database for our application
+- myphpadmin (Ejemplo)
+In the .env file, add database information.
+- .env
+Storage Link
+- php artisan storage:link
 
+crear nuestro propio symlink, en vez de usar php artisan storage:link del lado de la VM, correr mejor el ln del lado de la maquina local:
+ln -s /location/to/link2 newlink
+- ln -s /home/enrique/laravel/homestead/pruebas/livewire_test/storage/app/public storage
 
+Para que funcione, Se tiene que correr desde VM homestead:
+- php artisan storage:link
+
+Migrate the database
+- php artisan migrate
+[Optional]: Seed the database
+- php artisan migrate:fresh --seed
+
+Compilar:
+- npm run dev
+[Optional]
+- npm run watch
