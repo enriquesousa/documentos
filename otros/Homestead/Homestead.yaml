@@ -18,10 +18,13 @@ sites:
       to: /home/vagrant/code/pruebas/test/public
     - map: homestead.pruebas.livewire_test
       to: /home/vagrant/code/pruebas/livewire_test/public
+    - map: homestead.victorarana.ecommerce_homestead
+      to: /home/vagrant/code/victorarana/ecommerce_homestead/public
 
 databases:
     - homestead_test
     - livewire_test
+    - ecommerce_homestead
 
 features:
     - mysql: true

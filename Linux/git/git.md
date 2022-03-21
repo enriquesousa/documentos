@@ -428,7 +428,7 @@ Compilar:
 Clonar con gitkraken
 - composer install
 - npm install
-- Create a copy of .env.example ti .env file
+- Create a copy of .env.example en .env file
 Generate an app encryption key
 - php artisan key:generate
 Create an empty database for our application
