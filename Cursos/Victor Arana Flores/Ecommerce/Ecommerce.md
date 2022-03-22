@@ -476,14 +476,204 @@ class DatabaseSeeder extends Seeder
 Correr las migraciones para probar:
 - php artisan migrate:fresh --seed
 # 09. Insertar registros en la tabla subcategories
+En database/seeders/SubcategorySeeder.php:
+```php
+<?php
 
+namespace Database\Seeders;
 
+use App\Models\Subcategory;
+use Illuminate\Support\Str;
+use Illuminate\Database\Seeder;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
+class SubcategorySeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        $subcategories = [
+            
+            // Celulares y tablets
+            [
+                'category_id' => 1,
+                'name' => 'Celulares y smartphones',
+                'slug' => Str::slug('Celulares y smartphones'),
+                'color' => true,
+            ],
+            [
+                'category_id' => 1,
+                'name' => 'Accesorios para celulares',
+                'slug' => Str::slug('Accesorios para celulares'),
+            ],
+            [
+                'category_id' => 1,
+                'name' => 'Smartwatches',
+                'slug' => Str::slug('Smartwatches'),
+            ],
 
+            // TV, audio y video
+            [
+                'category_id' => 2,
+                'name' => 'TV y audio',
+                'slug' => Str::slug('TV y audio'),
+            ],
+            [
+                'category_id' => 2,
+                'name' => 'Audios',
+                'slug' => Str::slug('Audios'),
+            ],
+            [
+                'category_id' => 2,
+                'name' => 'Audio para autos',
+                'slug' => Str::slug('Audio para autos'),
+            ],
 
+            // Consola y video juegos
+            [
+                'category_id' => 3,
+                'name' => 'Xbox',
+                'slug' => Str::slug('Xbox'),
+            ],
+            [
+                'category_id' => 3,
+                'name' => 'Play station',
+                'slug' => Str::slug('Play station'),
+            ],
+            [
+                'category_id' => 3,
+                'name' => 'Videojuegos para PC',
+                'slug' => Str::slug('Videojuegos para PC'),
+            ],
+            [
+                'category_id' => 3,
+                'name' => 'Nintendo',
+                'slug' => Str::slug('Nintendo'),
+            ],
 
+            // Computación
+            [
+                'category_id' => 4,
+                'name' => 'Portátiles',
+                'slug' => Str::slug('Portátiles'),
+            ],
+            [
+                'category_id' => 4,
+                'name' => 'PC escritorio',
+                'slug' => Str::slug('PC escritorio'),
+            ],
+            [
+                'category_id' => 4,
+                'name' => 'Almacenamiento',
+                'slug' => Str::slug('Almacenamiento'),
+            ],
+            [
+                'category_id' => 4,
+                'name' => 'Accesorios computadoras',
+                'slug' => Str::slug('Accesorios computadoras'),
+            ],
 
+            // Moda
+            [
+                'category_id' => 5,
+                'name' => 'Mujeres',
+                'slug' => Str::slug('Mujeres'),
+            ],
+            [
+                'category_id' => 5,
+                'name' => 'Hombres',
+                'slug' => Str::slug('Hombres'),
+            ],
+            [
+                'category_id' => 5,
+                'name' => 'Lentes',
+                'slug' => Str::slug('Lentes'),
+            ],
+            [
+                'category_id' => 5,
+                'name' => 'Relojes',
+                'slug' => Str::slug('Relojes'),
+            ],
 
+        ];
+
+        foreach ($subcategories as $subcategory) {
+            Subcategory::factory(1)->create($subcategory);
+        }
+    }
+}
+```
+Crear el factory
+- php artisan make:factory SubcategoryFactory
+
+Corregir la carpeta de database/factories/CategoryFactory.php:
+```php
+<?php
+
+namespace Database\Factories;
+
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Category>
+ */
+class CategoryFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
+    public function definition()
+    {
+        return [
+            'image' => 'categories/' . $this->faker->image('public/storage/categories', 640, 480, null, false), // con false me regresa solo: imagen.jpg
+        ];
+    }
+}
+```
+
+En database/seeders/DatabaseSeeder.php:
+```php
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
+
+class DatabaseSeeder extends Seeder
+{
+    /**
+     * Seed the application's database.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        Storage::deleteDirectory('public/categories'); 
+        Storage::deleteDirectory('public/subcategories');
+
+        Storage::makeDirectory('public/categories'); 
+        Storage::makeDirectory('public/subcategories');
+
+        $this->call(UserSeeder::class);
+        $this->call(CategorySeeder::class);
+        $this->call(SubcategorySeeder::class);
+
+    }
+}
+```
+
+Correr las migraciones:
+- php artisan migrate:fresh --seed
+Listo!
+Ya funciono hasta aquí.
 # 10. Insertar registros en la tabla brands
 # 11. Insertar registros en la tabla products
 # 12. Insertar registros en la tabla colors
