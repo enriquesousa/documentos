@@ -675,6 +675,131 @@ Correr las migraciones:
 Listo!
 Ya funciono hasta aquí.
 # 10. Insertar registros en la tabla brands
+Utilizar este factory database/factories/BrandFactory.php para introducir registros de las marcas.
+```php
+<?php
+
+namespace Database\Factories;
+
+use App\Models\Brand;
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Brand>
+ */
+class BrandFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
+    public function definition()
+    {
+        return [
+            'name' => $this->faker->word(),
+        ];
+    }
+}
+```
+
+Agregar relación de brands con categorías, y de una vez la relación entre brands y products.
+app/Models/Brand.php:
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Brand extends Model
+{
+    use HasFactory;
+
+    protected $fillable = ['name'];
+
+    // Relación uno a muchos
+    public function products(){
+        return $this->hasMany(Product::class);
+    }
+
+    // Relación muchos a muchos
+    public function categories(){
+        return $this->belongsToMany(Category::class);
+    }
+
+}
+```
+
+En database/seeders/CategorySeeder.php:
+```php
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Brand;
+use App\Models\Category;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
+
+class CategorySeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        $categories = [
+            [
+                'name' => 'Celulares y tablets',
+                'slug' => Str::slug('Celulares y tablets'),
+                'icon' => '<i class="fa-thin fa-mobile-screen-button"></i>'
+            ],
+            [
+                'name' => 'TV, audio y video',
+                'slug' => Str::slug('TV, audio y video'),
+                'icon' => '<i class="fa-thin fa-tv"></i>'
+            ],
+            [
+                'name' => 'Consola y video juegos',
+                'slug' => Str::slug('Consola y video juegos'),
+                'icon' => '<i class="fa-thin fa-gamepad-modern"></i>'
+            ],
+            [
+                'name' => 'Computación',
+                'slug' => Str::slug('Computación'),
+                'icon' => '<i class="fa-thin fa-computer"></i>'
+            ],
+            [
+                'name' => 'Moda',
+                'slug' => Str::slug('Moda'),
+                'icon' => '<i class="fa-thin fa-shirt"></i>'
+            ],
+        ];
+
+        foreach ($categories as $category) {
+            $category = Category::factory(1)->create($category)->first();
+
+            // cada categoría que vamos a crear tendrá 4 marcas distintas
+            $brands = Brand::factory(4)->create();
+            foreach ($brands as $brand) {
+                $brand->categories()->attach($category->id);
+            }
+
+        }
+
+    }
+}
+```
+
+Hacer la prueba con:
+- php artisan migrate:fresh --seed
+Listo!
+Cada categoría ya tiene 4 marcas!
 # 11. Insertar registros en la tabla products
 # 12. Insertar registros en la tabla colors
 # 13. Insertar registros en la tabla tallas
