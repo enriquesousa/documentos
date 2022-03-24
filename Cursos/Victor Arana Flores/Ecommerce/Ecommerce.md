@@ -6,6 +6,7 @@ Victor Arana Flores
 @victoraranaflores
 # Sección 1: Introducción
 # 01. Programas necesarios
+- https://github.com/coders-free/ecommerce
 # 02. Instalación
 En htdocs
 - laravel new ecommerce --jet
@@ -801,6 +802,370 @@ Hacer la prueba con:
 Listo!
 Cada categoría ya tiene 4 marcas!
 # 11. Insertar registros en la tabla products
+Agregar nuevo campo 'status' a la tabla products.
+vamos almacenar dos números:
+1 - el producto esta en proceso
+2 - el producto ya esta publicado
+En database/migrations/2022_03_01_024453_create_products_table.php:
+```php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+use App\Models\Product; //para hacer referencia a las constantes BORRADOR y PUBLICADO
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::create('products', function (Blueprint $table) {
+            $table->id();
+
+            $table->string('name');
+			$table->string('slug');
+			$table->text('description');
+			$table->float('price');
+
+			$table->unsignedBigInteger('subcategory_id');
+            $table->foreign('subcategory_id')->references('id')->on('subcategories');
+            
+            $table->unsignedBigInteger('brand_id');
+            $table->foreign('brand_id')->references('id')->on('brands');
+            
+            $table->integer('quantity')->nullable();
+
+            $table->enum('status', [Product::BORRADOR, Product::PUBLICADO])->default(Product::BORRADOR);
+
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::dropIfExists('products');
+    }
+};
+```
+Nota: como importamos use App\Models\Product; //para hacer referencia a las constantes BORRADOR y PUBLICADO
+en app/Models/Product.php:
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Product extends Model
+{
+    use HasFactory;
+
+    const BORRADOR = 1;
+    const PUBLICADO = 2;
+
+    // la propiedad $guarded hace el efecto contrario a $fillable
+    // que campos no quiero que asigne a la asignaciones masiva
+    protected $guarded = ['id', 'created_at', 'updated_at'];
+
+    // relación uno a muchos products y sizes
+    public function sizes(){
+        return $this->hasMany(Size::class);
+    }
+
+    // relación uno a muchos inversa
+    public function brand(){
+        return $this->belongsTo(Brand::class);
+    }
+
+    // relación uno a muchos inversa
+    public function subcategory(){
+        return $this->belongsTo(Subcategory::class);
+    }
+
+    // relación muchos a muchos products con colors
+    public function colors(){
+        return $this->belongsToMany(Color::class);
+    }
+
+    // relación uno a muchos polimórfica
+    public function images(){
+        return $this->morphMany(Image::class, "imageable");
+    }
+
+}
+```
+Esto lo hicimos para que en un futuro podamos recordar que hacen las constantes que estamos almacenando en el campo status de la tabla products.
+
+En database/factories/ProductFactory.php:
+```php
+<?php
+
+namespace Database\Factories;
+
+use App\Models\Product;
+use App\Models\Subcategory;
+use Illuminate\Support\Str;
+
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Product>
+ */
+class ProductFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
+    public function definition()
+    {
+
+        $name = $this->faker->sentence(2);
+
+        // recuperar una subcategory al azar
+        $subcategory = Subcategory::all()->random();
+        // recuperar la categoría a la que pertenece esta subcategory
+        $category = $subcategory->category;
+        // recuperar la colección de marcas de esta categoría y escoger una al azar
+        $brand = $category->brands->random();
+
+        // En caso que color sea true en $subcategory NO almacenar quantity dejarla en NULL
+        if ($subcategory->color) {
+            $quantity = null;
+        }else{
+            $quantity = 15;
+        }
+
+        return [
+            'name' => $name,
+            'slug' => Str::slug($name),
+            'description' => $this->faker->text(),
+            'price' => $this->faker->randomElement([19.99, 49.99, 99.99]),
+            'subcategory_id' => $subcategory->id,
+            'brand_id' => $brand->id,
+            'quantity' => $quantity,
+            'status' => 2
+        ];
+    }
+}
+``` 
+
+Ahora incluir el ProductFactory.php al seeder.
+database/seeders/ProductSeeder.php:
+```php
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Product;
+
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+
+class ProductSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        Product::factory(250)->create();
+    }
+}
+```
+
+Por ultimo incluir ProductSeeder en.
+database/seeders/DatabaseSeeder.php:
+```php
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
+
+class DatabaseSeeder extends Seeder
+{
+    /**
+     * Seed the application's database.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        Storage::deleteDirectory('public/categories'); 
+        Storage::deleteDirectory('public/subcategories');
+
+        Storage::makeDirectory('public/categories'); 
+        Storage::makeDirectory('public/subcategories');
+
+        $this->call(UserSeeder::class);
+        $this->call(CategorySeeder::class);
+        $this->call(SubcategorySeeder::class);
+        $this->call(ProductSeeder::class);
+        
+    }
+}
+```
+
+Correr las migraciones para verificar que todo este funcionando correctamente:
+- php artisan migrate:fresh --seed
+Listo!
+Ya funciono hasta aquí!
 # 12. Insertar registros en la tabla colors
+En database/seeders/ColorSeeder.php:
+```php
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+
+use App\Models\Color;
+
+class ColorSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        $colors = ['white', 'blue', 'red', 'black'];
+
+        foreach ($colors as $color) {
+            Color::create([
+                'name' => $color
+            ]);
+        }
+
+    }
+}
+```
+
+En database/seeders/DatabaseSeeder.php:
+```php
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
+
+class DatabaseSeeder extends Seeder
+{
+    /**
+     * Seed the application's database.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        Storage::deleteDirectory('public/categories'); 
+        Storage::deleteDirectory('public/subcategories');
+
+        Storage::makeDirectory('public/categories'); 
+        Storage::makeDirectory('public/subcategories');
+
+        $this->call(UserSeeder::class);
+        $this->call(CategorySeeder::class);
+        $this->call(SubcategorySeeder::class);
+
+        $this->call(ProductSeeder::class);
+        $this->call(ColorSeeder::class);
+        $this->call(ColorProductSeeder::class);
+        
+    }
+}
+```
+
+Ejecutar las migraciones con los seeders.
+- php artisan migrate:fresh --seed
+Listo!
+
+Para poder relacionar la tabla colors con products necesitamos, crear un nuevo seeder ColorProductSeeder:
+- php artisan make:seeder ColorProductSeeder
+
+En  database/seeders/ColorProductSeeder.php:
+```php
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+
+use Illuminate\Database\Eloquent\Builder;
+use App\Models\Product;
+
+class ColorProductSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        // consulta a las relaciones del modelo Product
+        // nos regresara todos los productos solo si 
+        // el color es true y size es false 
+        $products = Product::whereHas('subcategory', function(Builder $query){
+            $query->where('color', true)->where('size', false);
+        })->get();
+
+        // para introducir registros a la tabla intermedia color_product
+        // cada uno de estos productos van a tener 4 colores, 10 de cada color
+        foreach ($products as $product) {
+            $product->colors()->attach([
+                1 => [
+                    'quantity' => 10
+                ], 
+                2 => [
+                    'quantity' => 10
+                ], 
+                3 => [
+                    'quantity' => 10
+                ], 
+                4 => [
+                    'quantity' => 10
+                ]
+            ]);
+        }        
+
+    }
+}
+```
+
+Ejecutar las migraciones con los seeders.
+- php artisan migrate:fresh --seed
+Listo!
+Ya funciono hasta aquí.
 # 13. Insertar registros en la tabla tallas
+
+
+
+
+
+
+
 # 14. Descargar imágenes para los productos
