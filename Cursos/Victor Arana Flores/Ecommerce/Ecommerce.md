@@ -5,17 +5,17 @@ Cursos/Victor Arana Flores/Ecommerce/Ecommerce.md
 Victor Arana Flores
 @victoraranaflores
 # Sección 1: Introducción
-# 01. Programas necesarios
+## 01. Programas necesarios
 - https://github.com/coders-free/ecommerce
-# 02. Instalación
+## 02. Instalación
 En htdocs
 - laravel new ecommerce --jet
 - npm install && npm run dev
-# 03. Extensiones VSC
+## 03. Extensiones VSC
 # Sección 2: Diseño de la base de datos
-# 04. Maquinación de la bbdd
-# 05. Maquinación de la bbdd 2
-# 06. Modelo físico
+## 04. Maquinación de la bbdd
+## 05. Maquinación de la bbdd 2
+## 06. Modelo físico
 0:40
 - php artisan make:model Category -ms
 
@@ -45,7 +45,7 @@ En htdocs
 
 22:30
 - php artisan migrate
-# 07. Generar relaciones Eloquent
+## 07. Generar relaciones Eloquent
 Generar las relaciones a nivel de Eloquent.
 
 1. Una Categoría puede tener varias subcategories y entre categories y brands hay una relación de muchos a muchos.
@@ -326,7 +326,7 @@ class Product extends Model
 ```
 Listo!
 # Sección 3: Insertar registros de prueba a la bbdd
-# 08. Insertar registros en la tabla categories
+## 08. Insertar registros en la tabla categories
 Crear el seeder para users
 - php artisan make:seeder UserSeeder
 
@@ -476,7 +476,7 @@ class DatabaseSeeder extends Seeder
 
 Correr las migraciones para probar:
 - php artisan migrate:fresh --seed
-# 09. Insertar registros en la tabla subcategories
+## 09. Insertar registros en la tabla subcategories
 En database/seeders/SubcategorySeeder.php:
 ```php
 <?php
@@ -675,7 +675,7 @@ Correr las migraciones:
 - php artisan migrate:fresh --seed
 Listo!
 Ya funciono hasta aquí.
-# 10. Insertar registros en la tabla brands
+## 10. Insertar registros en la tabla brands
 Utilizar este factory database/factories/BrandFactory.php para introducir registros de las marcas.
 ```php
 <?php
@@ -801,7 +801,7 @@ Hacer la prueba con:
 - php artisan migrate:fresh --seed
 Listo!
 Cada categoría ya tiene 4 marcas!
-# 11. Insertar registros en la tabla products
+## 11. Insertar registros en la tabla products
 Agregar nuevo campo 'status' a la tabla products.
 vamos almacenar dos números:
 1 - el producto esta en proceso
@@ -1028,7 +1028,7 @@ Correr las migraciones para verificar que todo este funcionando correctamente:
 - php artisan migrate:fresh --seed
 Listo!
 Ya funciono hasta aquí!
-# 12. Insertar registros en la tabla colors
+## 12. Insertar registros en la tabla colors
 En database/seeders/ColorSeeder.php:
 ```php
 <?php
@@ -1160,7 +1160,318 @@ Ejecutar las migraciones con los seeders.
 - php artisan migrate:fresh --seed
 Listo!
 Ya funciono hasta aquí.
-# 13. Insertar registros en la tabla tallas
+## 13. Insertar registros en la tabla tallas
+Crear nuevo seeder.
+- php artisan make:seeder SizeSeeder 
+
+En database/seeders/SizeSeeder.php:
+```php
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+
+use Illuminate\Database\Eloquent\Builder;
+use App\Models\Product;
+
+class SizeSeeder extends Seeder
+{
+    public function run()
+    {
+
+        $products = Product::whereHas('subcategory', function(Builder $query){
+            $query->where('color', true)->where('size', true);
+        })->get();
+
+        $sizes = ['Talla S', 'Talla M', 'Talla L'];
+
+        foreach ($products as $product) {
+
+            // a cada product de la colección le asignamos las 3 tallas
+            foreach ($sizes as $size) {
+                $product->sizes()->create([
+                    'name' => $size
+                ]);
+            }
+            
+        }
+        
+    }
+}
+```
+
+Agregamos el nuevo seeder a.
+database/seeders/DatabaseSeeder.php:
+```php
+$this->call(SizeSeeder::class);
+```
+
+Agregarle color y size a.
+database/seeders/SubcategorySeeder.php:
+```php
+[
+    'category_id' => 5,
+    'name' => 'Mujeres',
+    'slug' => Str::slug('Mujeres'),
+    'color' => true,
+    'size' => true
+],
+[
+    'category_id' => 5,
+    'name' => 'Hombres',
+    'slug' => Str::slug('Hombres'),
+    'color' => true,
+    'size' => true
+],
+```
+
+Ahora si, ejecutar las migraciones con los seeders.
+- php artisan migrate:fresh --seed
+Listo!
+Ahora ya aparecen datos en la tabla sizes! 
+## 14. Descargar imágenes para los productos
+En database/factories/ImageFactory.php:
+```php
+<?php
+
+namespace Database\Factories;
+
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Image>
+ */
+class ImageFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
+    public function definition()
+    {
+        return [
+            'url' => 'products/' . $this->faker->image('public/storage/products', 640, 480, null, false), // con false me regresa solo: imagen.jpg
+        ];
+    }
+}
+```
+
+En database/seeders/ProductSeeder.php:
+```php
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Image;
+use App\Models\Product;
+
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+
+class ProductSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        // por cada producto que creamos quiero 4 imágenes
+        Product::factory(250)->create()->each(function (Product $product){
+            Image::factory(4)->create([
+                'imageable_id' => $product->id,
+                'imageable_type' => Product::class,
+            ]);
+        });
+
+
+    }
+}
+```
+
+En database/seeders/DatabaseSeeder.php:
+```php
+Storage::deleteDirectory('public/products');
+
+Storage::makeDirectory('public/products');
+```
+
+Ahora si, ejecutar las migraciones con los seeders.
+- php artisan migrate:fresh --seed
+Listo!
+Se generaron 1000 imágenes en 
+# Sección 4: Ajuste de estilos
+## 15. Agregar colores
+Para poder usar colores en tailwind agregar:
+const colors = require('tailwindcss/colors');
+a tailwind.config.js:
+```php
+const defaultTheme = require('tailwindcss/defaultTheme');
+const colors = require('tailwindcss/colors');
+
+module.exports = {
+    content: [
+        './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
+        './vendor/laravel/jetstream/**/*.blade.php',
+        './storage/framework/views/*.php',
+        './resources/views/**/*.blade.php',
+    ],
+
+    theme: {
+        extend: {
+
+            fontFamily: {
+                sans: ['Nunito', ...defaultTheme.fontFamily.sans],
+            },
+
+        },
+    },
+
+    plugins: [require('@tailwindcss/forms'), require('@tailwindcss/typography')],
+};
+```
+Compilar con:
+- npm run dev
+
+Entrar a https://homestead.ecommerce/dashboard
+con las credenciales
+```php
+enrique.sousa@gmail.com
+sousa1234
+```
+En resources/views/dashboard.blade.php:
+```php
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Dashboard') }}
+        </h2>
+    </x-slot>
+
+    <div class="py-12">
+
+        <h1 class="text-orange-500">Hola mundo!</h1>
+
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-xl sm:rounded-lg">
+                <x-jet-welcome />
+            </div>
+        </div>
+    </div>
+</x-app-layout>
+```
+Listo!
+Ya funciono.
+## 16. Diseñar plantilla
+Vemos que la vista:
+- resources/views/dashboard.blade.php
+El cual llama a la plantilla (componente de blade) <x-app-layout> que esta en:
+- app/View/Components/AppLayout.php
+el cual solo manda renderizar a:
+- resources/views/layouts/app.blade.php
+Este es el archivo base del cual podemos extender, en este caso el contenido del dashboard lo estamos colocando dentro de este archivo base en el contenido de la pagina con:
+- {{ $slot }}
+También podemos colocar slots con nombre, tal es el caso de:
+- {{ $header }}
+El cual se esta mandando llamar desde dashboard.blade.php con esta sintaxis.
+- <x-slot name="header"> 
+Si no le ponemos nombre, asume que es {{ $slot }}
+
+Por otro lado vemos que en app.blade.php también es posible mandar llamar otro tipo de componentes como son componentes de livewire:
+- @livewire('navigation-menu')
+
+Nosotros vamos a crear nuestro propio menu de navegación y lo vamos a hacer dinámico usando un componente de livewire.
+Para crear un componente livewire:
+- php artisan make:livewire navigation
+
+Esto nos creo dos archivos:
+1. app/Http/Livewire/Navigation.php
+2. resources/views/livewire/navigation.blade.php
+
+Para poder crear nuestra propia clase de estar centrando el contenido vamos a crear.
+resources/css/container.css:
+```php
+.container{
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+```
+Agregarlo a resources/css/app.css:
+```php
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+@import 'container.css';
+```
+
+Compilar:
+- npm run dev 
+
+En resources/views/livewire/navigation.blade.php ya podemos usar la clase nueva que hicimos container:
+```php
+<header>
+    <div class="container">
+        Hola mundo
+    </div>
+</header>
+```
+Listo!
+# Sección 5: Diseñando el header
+## 17. Diseñando el header
+En resources/views/livewire/navigation.blade.php:
+```php
+<header class="bg-gray-600">
+    <div class="container flex items-center h-16">
+
+        <a class="flex flex-col items-center justify-center px-4 bg-white bg-opacity-25 text-white cursor-pointer font-semibold h-16">
+            <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                <path class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+
+            <span>
+                Categorías
+            </span>
+        </a>
+
+        <a href="/" class="ml-4">
+            <x-jet-application-mark class="block h-9 w-auto" />
+        </a>
+
+        @livewire('search')
+
+    </div>
+</header>
+```
+
+6:47
+Para crear los componentes jetstream.
+If you are using the Livewire stack, you should first publish the Livewire stack's Blade components:
+- php artisan vendor:publish --tag=jetstream-views
+nos crea los componentes en:
+resources/views/vendor/jetstream/components.
+
+El componente que contiene el logotipo es:
+resources/views/vendor/jetstream/components/application-mark.blade.php
+Para mandar llamar logotipo lo hacemos asi:
+<x-jet-application-mark />
+
+Crear nuevo componente livewire search.
+- php artisan make:livewire search
+
+En resources/views/livewire/search.blade.php:
+```php
+<div class="flex-1">
+    <x-jet-input type="text" class="ml-4 w-full" placeholder="Estas buscando algún producto?" />
+</div>
+```
+Listo!
+## 18. Incluir icono de lupa
+
+6:41
 
 
 
@@ -1168,4 +1479,207 @@ Ya funciono hasta aquí.
 
 
 
-# 14. Descargar imágenes para los productos
+
+
+## 19. Incluir dropdown
+## 20. Incluir icono de carrito de compras
+# Sección 6: Diseñar menu
+## 21. Diseñar el menu
+## 22. Diseñar el submenu I
+## 23. Diseñar el submenu II
+## 24. Agregar funcionalidades al menu I
+## 25. Agregar funcionalidades al menu II
+## 26. Menu responsivo I
+## 27. Menu responsivo II
+## 28. Menu responsivo III
+## 29. Menu responsivo IV
+# Sección 7: Slider
+## 30. Incluir Glider js a nuestro proyecto
+## 31. Slider de productos
+## 32. Solucionar desface
+## 33. Slider para todas las categorías
+## 34. Agregando filtros
+## 35. Solucionar errores con el slider
+## 36. Slider responsivo
+# Sección 8: Categorías
+## 37. Crear rutas para categorías
+## 38. Detalle de categoría
+## 39. Agregar filtros I
+## 40. Agregar filtros II
+## 41. Mostrar productos en forma de grid y lista
+## 42. Volver vista responsiva
+# Sección 9: Products
+## 43. Crear ruta de productos
+## 44. Incluir plugin FlexSlider
+## 45. Diseño vista detalle producto
+## 46. Traducir fechas
+## 47. Stock Productos
+## 48. Habilitar Deshabilitar botones
+## 49. Traer colores de productos
+## 50. Stock productos con color
+## 51. Agregar colores para producto con tallas
+## 52. Mostrar tallas y colores
+## 53. Traducir nuestra aplicación
+## 54. Stock tallas
+# Sección 10: Carrito de compras
+## 55. Instalar shopping cart
+## 56. Agregar items al carrito de compra
+## 57. Mostrar item en el carrito de compra I
+## 58. Mostrar item en el carrito de compra II
+## 59. Mostrar cantidad en el carrito de compras
+## 60. Agregar item con color al carrito
+## 61. Agregar item con talla al carrito
+## 62. Helpers
+## 63. Dompautolad
+## 64. Utilizar los helpers
+## 65. Nuevos modelos
+## 66. Mostrando stock de productos
+# Sección 11: Buscador
+## 67. Diseñar buscador I
+## 68. Diseñar buscador II
+## 69. Apuntar a un producto
+## 70. Mostrar resultado de búsqueda I
+## 71. Mostrar resultado de búsqueda II
+# Sección 12: Shopping cart
+## 72. Crear ruta de shopping cart
+## 73. Diseño vista shopping cart I
+## 74. Diseño vista shopping cart II
+## 75. Habilitar botones I
+## 76. Habilitar botones II
+## 77. Habilitar botones III
+## 78. Detalle de producto
+## 79. Destruir carrito de compras
+## 80. Detalle carrito de compras
+## 81. Eliminar producto
+# Sección 13: Crear ordenes
+## 82. Crear ruta para nuevas ordenes
+## 83. Generar eventos y oyentes
+## 84. Agregar lógica en los oyentes
+## 85. Crear las tablas necesarias
+## 86. Agregar campos
+## 87. Corregir errores
+## 88. Crear relaciones
+## 89. Llenar con datos falsos
+## 90. Crear la vista para crear una orden I
+## 91. Crear la vista para crear una orden II
+## 92. Interactuar Alpine con Livewire
+## 93. Crear ordenes I
+## 93. Crear ordenes II
+## 93. Crear ordenes III
+## 93. Crear ordenes IV
+## 97. Generar vista de resumen de orden
+# Sección 14: Mercado de pago
+## 98. Obtener credenciales de mercado pago
+## 99. Instalar SDK de mercado pago
+## 100. Checkout Mercado Pago
+## 101. Simular un pago
+## 102. Credenciales de producción
+## 103. Webhook
+## 104. Obtener un pago
+## 105. Incluir costos de envío
+# Sección 15: Pasarela de pago PayPal
+## 106. Modificar la vista de Payment
+## 107. Credenciales de PayPal
+## 108. Checkout PayPal
+## 109. Cambiar status de orden
+# Sección 16: Administrar ordenes
+## 110. Detalle de ordenes
+## 111. Agregar políticas de acceso
+## 112. Ruta para mostrar nuestras ordenes
+## 113. Detalle de mis ordenes I
+## 114. Detalle de mis ordenes II
+## 115. Filtrar ordenes por status
+## 116. Avisar que tienes ordenes pendientes
+## 117. Solucionar un pequeño error
+## 118. Descontar stock
+## 119. Anular ordenes
+## 120. Programar tareas
+# Sección 17: Agregar productos
+## 121. Crear ruta de administrador
+## 122. Mostrar productos I
+## 123. Mostrar productos II
+## 124. Habilitar buscador
+## 125. Vista crear productos I
+## 126. Vista crear productos II
+## 127. Vista crear productos III
+## 128. Vista crear productos IV
+## 129. Reglas de validación
+## 130. Agregar registro a la BBDD
+# Sección 18: Editar productos
+## 131. Crear ruta de edición 
+## 132. Crear formulario de edición 
+## 133. Solucionar algunos errores
+## 134. Actualizar producto
+## 135. Agregar componente de color y talla
+# Sección 19: Componente color product
+## 136. Crear formulario
+## 137. Agregar productos con color
+## 138. Actualizar registro I
+## 139. Actualizar registro II
+## 140. Actualizar registro III
+## 141. Eliminar registro
+# Sección 20: Componente size product
+## 142. Agregar talla
+## 143. Actualizar talla
+## 144. Eliminar talla
+## 145. Agregar color a talla
+## 146. Editar color de talla
+## 147. Eliminar talla
+## 148. Solucionar errores
+# Sección 21: Subir imágenes
+## 149. Subir imágenes con Dropzone
+## 150. Mostrar y eliminar imágenes
+## 151. Solucionar error
+## 152. Refrescar imágenes
+## 153. Solucionar error
+## 154. Eliminar datos sobrantes
+# Sección 22: Detalles finales
+## 155. Cambiar status del producto
+## 156. Eliminar productos
+## 157. Modificar plantilla admin
+# Sección 23: Categorías
+## 158. Formulario crear categorías
+## 159. Reglas de validación
+## 160. Crear categorías
+## 161. Mostrar categorías
+## 162. Eliminar categorías
+## 163. Editar categorías I
+## 164. Editar categorías II
+## 165. Editar categorías III
+## 166. Editar categorías IV
+## 167. Detalle de categoría
+# Sección 24: Subcategoría
+## 168. Modificar Subcategoría en la vista comprador
+## 169. Mostrar subcategorías
+## 170. Crud subcategorías
+# Sección 25: Cruds finales
+## 171. Crud marcas
+# Sección 26: Ordenes
+## 172. Mostrar ordenes
+## 173. Administrar ordenes
+# Sección 27: Envíos
+## 174. Crud de departamentos I
+## 175. Crud de departamentos II
+## 176. Crud de ciudades
+## 177. Crud de distritos I
+## 178. Crud de distritos II
+## 179. Modificar migraciones
+## 180. Eliminar datos de envió
+# Sección 28: Laravel Permission
+## 181. Instalar Laravel Permission
+## 182. Crear Crud para usuarios
+## 183. Mostrar listado de usuarios
+## 184. Agregar buscador
+## 185. Asignar rol
+# Sección 29: Diseño responsivo
+## 186. Diseño responsivo 1
+## 187. Diseño responsivo 2
+## 188. Diseño responsivo 3
+## 189. Diseño responsivo 4
+## 190. Diseño responsivo 5
+## 191. Diseño responsivo 6
+# Sección 30: Reseñas
+## 192. Formulario de reseñas
+## 193. Mostrar formulario a personas que compraron el producto
+## 194. Almacenar reseña
+## 195. Mostrar reseñas

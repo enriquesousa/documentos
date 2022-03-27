@@ -155,6 +155,7 @@ export PS1="\u@\h: \w \n$ "
 # alias d='cd /home/enrique/laravel/domina-laravel'
 alias h='menu.sh'
 alias mc='EDITOR=micro mc'
+alias s='exit'
 
 # Siguiente codigo tomado de: 
 # https://raw.githubusercontent.com/ChrisTitusTech/scripts/master/fancy-bash-promt.sh
