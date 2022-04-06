@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FreeFileSync XmlType="GUI" XmlFormat="17">
+    <Compare>
+        <Variant>TimeAndSize</Variant>
+        <Symlinks>Exclude</Symlinks>
+        <IgnoreTimeShift/>
+    </Compare>
+    <Synchronize>
+        <Variant>Update</Variant>
+        <DetectMovedFiles>false</DetectMovedFiles>
+        <DeletionPolicy>RecycleBin</DeletionPolicy>
+        <VersioningFolder Style="Replace"/>
+    </Synchronize>
+    <Filter>
+        <Include>
+            <Item>/Linux/vagrant/LaravelHomeStead.md</Item>
+            <Item>/JESS/bitacora.md</Item>
+            <Item>/Linux/git/git.md</Item>
+            <Item>/Linux_Edits_Shells_Utilities/mc/mc.md</Item>
+            <Item>/Linux/keyboard-custom/Custom-Keyboard.md</Item>
+            <Item>/Cursos/Victor Arana Flores/Livewire/Livewire.md</Item>
+            <Item>/Cursos/Victor Arana Flores/Ecommerce/Ecommerce.md</Item>
+        </Include>
+        <Exclude>
+            <Item>*/.Trash-*/</Item>
+            <Item>*/.recycle/</Item>
+        </Exclude>
+        <TimeSpan Type="None">0</TimeSpan>
+        <SizeMin Unit="None">0</SizeMin>
+        <SizeMax Unit="None">0</SizeMax>
+    </Filter>
+    <FolderPairs>
+        <Pair>
+            <Left>/home/enrique/insync/insync2022/docstxt</Left>
+            <Right>/home/enrique/laravel/homestead/jess/docs</Right>
+        </Pair>
+    </FolderPairs>
+    <Errors Ignore="false" Retry="0" Delay="5"/>
+    <PostSyncCommand Condition="Completion"/>
+    <LogFolder/>
+    <EmailNotification Condition="Always"/>
+    <Gui>
+        <GridViewType>Action</GridViewType>
+    </Gui>
+</FreeFileSync>
